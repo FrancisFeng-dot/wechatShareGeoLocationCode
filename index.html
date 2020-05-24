@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <style type="text/css">
+        #container{
+            min-width:600px;
+            min-height:767px;
+        }
+    </style>
+    <script src="/js/jquery-1.8.3.min.js"></script>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script><!-- 分享 -->
+    <script src="/js/transformFromWGSToGCJ.js"></script>   <!-- 位置校准 --> 
+    <script charset="utf-8" src="http://map.qq.com/api/js?v=2.exp"></script><!-- 腾讯地图 -->
+    <script>
+        $(function(){
+            var latitude = ''; // 纬度，浮点数，范围为90 ~ -90
+            var longitude = ''; // 经度，浮点数，范围为180 ~ -180。
+            var speed = ''; // 速度，以米/每秒计
+            var accuracy = ''; // 位置精度
+            var address = '';//地址详细名称
+            var name = '';//地址列表
+            wx.config({
+                debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+                appId: '{$signPackage.appId}', // 必填，公众号的唯一标识
+                timestamp:'{$signPackage.timestamp}', // 必填，生成签名的时间戳
+                nonceStr: '{$signPackage.nonceStr}', // 必填，生成签名的随机串
+                signature: '{$signPackage.signature}',// 必填，签名，见附录1
+                jsapi_ticket: '{$signPackage.jsapi_ticket}',// 必填
+                jsApiList: [
+                    'checkJsApi',
+                    'onMenuShareTimeline',
+                    'onMenuShareAppMessage',
+                    'onMenuShareQQ',
+                    'onMenuShareWeibo',
+                    'openLocation',//获取地址
+                    'getLocation'//点击获取地址
+                ] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+            });
+            wx.ready(function (){
+                wx.checkJsApi({
+                    jsApiList: [
+                        'getNetworkType',
+                        'previewImage',
+                        'onMenuShareTimeline',
+                        'onMenuShareAppMessage',
+                        'onMenuShareQQ',
+                        'onMenuShareWeibo',
+                        'getLocation',//获取地理位置接口
+                        'openLocation'//使用微信内置地图查看地理位置接口
+                    ],
+                    success: function (res) {
+                        if (res.checkResult.getLocation == false) {
+                        alert('你的微信版本太低，不支持微信JS接口，请升级到最新的微信版本！');
+                        return;
+                        }
+                    }
+                });
+                wx.onMenuShareTimeline({
+                    title: '{$news.Title}',
+                    link: '{$news.Url}',
+                    imgUrl: '{$news.PicUrl}',
+                    trigger: function (res) {
+                        alert('用户点击分享到朋友圈1');
+                    },
+                    success: function (res) {
+                        alert('已分享1');
+                    }
+                });
+                wx.onMenuShareAppMessage({
+                    title: '{$news.Title}',
+                    desc: '{$news.Description}',
+                    link: '{$news.Url}',
+                    imgUrl: '{$news.PicUrl}',
+                    trigger: function (res) {
+                    },
+                    success: function (res) {
+                    }
+                });
+                wx.onMenuShareQQ({
+                    title: '{$news.Title}',
+                    desc: '{$news.Description}',
+                    link: '{$news.Url}',
+                    imgUrl: '{$news.PicUrl}',
+                    trigger: function (res) {
+                    },
+                    success: function (res) {
+                    }
+                });
+                wx.onMenuShareWeibo({
+                    title: '{$news.Title}',
+                    desc: '{$news.Description}',
+                    link: '{$news.Url}',
+                    imgUrl: '{$news.PicUrl}',
+                    trigger: function (res) {
+                    },
+                    success: function (res) {
+                    }
+                });
+                wx.getLocation({  
+                    success: function (res) {  
+
+                        //调用修正经纬度
+                        var lonlat = transformFromWGSToGCJ(
+                            parseFloat(res.longitude),//调用修正经纬度
+                            parseFloat(res.latitude)//调用修正经纬度
+                        ); //调用修正经纬度
+                        res.longitude = lonlat.lng;//调用修正经纬度
+                        res.latitude = lonlat.lat;//调用修正经纬度
+
+
+
+                        //alert(JSON.stringify(res)); 
+                        latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                        longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                        speed = res.speed; // 速度，以米/每秒计
+                        accuracy = res.accuracy; // 位置精度
+
+                        //调用获取详细地址
+                        var geocoder = new qq.maps.Geocoder({
+                            complete: function (result) {   //解析成功的回调函数
+                                // address = result.detail.nearPois;  //获取详细地址信息数组
+                                address = result.detail.address;  //获取详细地址信息
+                                //alert(JSON.stringify(address));
+                            }
+                        });
+                        geocoder.getAddress(new qq.maps.LatLng(latitude, longitude));//调用获取详细地址
+
+
+
+
+                        //调用geolocation_latlng，获取当前位置详情地图 
+                        var citylocation,map,marker = null;
+                        var center = new qq.maps.LatLng(latitude, longitude);
+                        var city = document.getElementById("city");
+                        map = new qq.maps.Map(document.getElementById('container'),{
+                            center: center,
+                            zoom: 13
+                        });
+                        //调用城市服务信息
+                        citylocation = new qq.maps.CityService({
+                            complete : function(results){
+                                map.setCenter(results.detail.latLng);
+                                city.style.display = 'inline';
+                                city.innerHTML = '所在位置: ' + results.detail.name;
+                                
+                                if (marker != null) {
+                                    marker.setMap(null);
+                                }
+                                //设置marker标记
+                                marker = new qq.maps.Marker({
+                                    map: map,
+                                    position: results.detail.latLng
+                                });
+                            }
+                        });
+                    },  
+                    cancel: function (res) {  
+                        alert('用户拒绝授权获取地理位置');  
+                    }  
+                });
+                function geolocation_latlng(){
+                    //获取经纬度信息
+                    var input = document.getElementById("latLng").value;
+                    //用,分割字符串截取两位长度
+                    var latlngStr = input.split(",",2);
+                    //解析成浮点数 取值第一位 第二位
+                    var lat = parseFloat(latlngStr[0]);
+                    var lng = parseFloat(latlngStr[1]);
+                    //设置经纬度信息
+                    var latLng = new qq.maps.LatLng(lat, lng);
+                    //调用城市经纬度查询接口实现经纬查询
+                    citylocation.searchCityByLatLng(latLng);
+                };
+            });
+            // 7 地理位置接口 开始  
+            // 7.1 查看地理位置  
+            document.querySelector('#openLocation').onclick = function () {  
+                wx.openLocation({  
+                    latitude: latitude,  
+                    longitude: longitude,  
+                    name: name,  
+                    address: address,  
+                    scale: 14,  
+                    infoUrl: 'http://weixin.qq.com'  
+                });  
+            };  
+        });
+    </script>
+</head>
+<body>
+
+    <!-- 腾讯地图当前页显示 -->
+    <div>
+        <input id="latLng" type="textbox" value="39.89477,116.35432">
+        <input type="button" value="search" onclick="geolocation_latlng()"><!-- 点击重置定位 -->
+        <span style="height:30px;display:none" id="city"></span>
+    </div>
+    <p>根据地理坐标确定地图中心位置。</p>
+    <div id="container"></div>
+    <button class="btn btn_primary" id="openLocation">openLocation</button><!-- 点击查看地图详情 -->
+    <!-- 腾讯地图当前页显示 -->
+</body>
+</html>
