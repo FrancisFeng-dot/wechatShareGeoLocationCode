@@ -15,13 +15,13 @@ return [
     // +----------------------------------------------------------------------
 	
 	'Wx'   =>[
-    'token'=>'59b0dfbaad2a2',//微信公众号原始ID
-    'appid'=>'wxe17620f9288ad227',//微信AppID(应用ID)
-    'secret'=>'84c6a0d2b1cad19d18158aaeab2d04bf',//AppSecret(应用密钥)
+    'token'=>'59b0dfbaad2',//微信公众号原始ID
+    'appid'=>'你的appid',//微信AppID(应用ID)
+    'secret'=>'你的appsecret',//AppSecret(应用密钥)
     ],
 
 
      //微信appid
-    'wechat_appid'=>'wxf01bee5587ed09db',
-    'wechat_secret'=>'f93b79e44ca6a53aaf8634b4773214bf',
+    'wechat_appid'=>'你的appid',
+    'wechat_secret'=>'你的appsecret',
 ];
